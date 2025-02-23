@@ -3,6 +3,10 @@ import win32com.client
 import openpyxl
 import xlrd
 from docx import Document
+from odf.opendocument import load
+from odf.text import P
+from odf.table import Table
+from odf.table import TableCell
 
 
 def clean_text(text):
@@ -95,6 +99,31 @@ def search_in_docx(file_path, search_texts):
     return found_texts
 
 
+def extract_text_from_odt(doc):
+    TEXT_NODE = 3
+    text = []
+    for p in doc.getElementsByType(P):
+        text.append("".join(node.data for node in p.childNodes if node.nodeType == TEXT_NODE))
+    return " ".join(text)
+
+
+def search_in_odt(file_path, search_texts):
+    found_texts = []
+    try:
+        doc = load(file_path)
+        text = clean_text(extract_text_from_odt(doc))
+
+        for phrase in search_texts:
+            if clean_text(phrase) in text:
+                print(f'✅ Знайдено текст "{phrase}"')
+                found_texts.append(f"Знайдено текст '{phrase}'")
+    except Exception as e:
+        print(f"❌ Помилка обробки {file_path}: {e}")
+
+    return found_texts
+
+
+
 def search_in_all_files(root_folder, search_texts):
     results = []
 
@@ -114,6 +143,9 @@ def search_in_all_files(root_folder, search_texts):
             elif filename.lower().endswith(".xls"):
                 print(f"🔍 Перевіряю: {file_path}")
                 found_texts = search_in_xls(file_path, search_texts)
+            elif filename.lower().endswith(".odt"):
+                print(f"🔍 Перевіряю: {file_path}")
+                found_texts = search_in_odt(file_path, search_texts)
             else:
                 continue
 
