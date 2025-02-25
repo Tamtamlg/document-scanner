@@ -2,6 +2,7 @@ import os
 import win32com.client
 import openpyxl
 import xlrd
+import socket
 from docx import Document
 from odf.opendocument import load
 from odf.text import P
@@ -208,6 +209,11 @@ def search_in_all_files(root_folder, search_texts):
     return results
 
 
+def get_computer_name():
+    computer_name = socket.gethostname()
+    return computer_name
+
+
 if __name__ == "__main__":
     print(f"document_scanner v{VERSION} підтримує формати doc, docx, xls, xlsx, odt, ods\n")
 
@@ -215,6 +221,7 @@ if __name__ == "__main__":
     search_phrases = ["Для службового користування", "Таємно"]
 
     all_results = {}
+    computer_name = get_computer_name()
 
     for disk in disks:
         root_folder = f"{disk}:\\"
@@ -225,7 +232,7 @@ if __name__ == "__main__":
 
             all_results[disk] = results  
 
-            result_file = f"search_results_{disk}.txt"
+            result_file = f"{computer_name}_{disk}.txt"
             with open(result_file, "w", encoding="utf-8") as f:
                 for file, texts in results:
                     f.write(f"\n📄 Файл: {file}\n")
