@@ -8,8 +8,27 @@ from odf.text import P
 from odf.table import Table, TableRow, TableCell
 
 
+VERSION = '1.0.0'
+
+
 def clean_text(text):
     return " ".join(text.split()).lower()
+
+
+def search_in_tmp(file_path, search_texts):
+    found_texts = []
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            text = clean_text(f.read())
+
+            for phrase in search_texts:
+                if clean_text(phrase) in text:
+                    print(f"✅ Знайдено текст '{phrase}'")
+                    found_texts.append(f"Знайдено текст '{phrase}'")
+    except Exception as e:
+        print(f"❌ Помилка обробки {file_path}: {e}")
+    
+    return found_texts
 
 
 def search_in_xlsx(file_path, search_texts):
@@ -74,6 +93,7 @@ def search_in_doc(file_path, search_texts):
             pass
     return found_texts
 
+
 def search_in_docx(file_path, search_texts):
     found_texts = []
     try:
@@ -134,6 +154,7 @@ def extract_text_from_ods(doc):
                     text.append(cell_text)
     return " ".join(text)
 
+
 def search_in_ods(file_path, search_texts):
     found_texts = []
     try:
@@ -148,8 +169,6 @@ def search_in_ods(file_path, search_texts):
         print(f"❌ Помилка обробки {file_path}: {e}")
 
     return found_texts
-
-
 
 
 def search_in_all_files(root_folder, search_texts):
@@ -177,6 +196,9 @@ def search_in_all_files(root_folder, search_texts):
             elif filename.lower().endswith(".ods"):
                 print(f"🔍 Перевіряю: {file_path}")
                 found_texts = search_in_ods(file_path, search_texts)
+            elif filename.lower().endswith(".tmp"):
+                print(f"🔍 Перевіряю: {file_path}")
+                found_texts = search_in_tmp(file_path, search_texts)
             else:
                 continue
 
@@ -187,6 +209,8 @@ def search_in_all_files(root_folder, search_texts):
 
 
 if __name__ == "__main__":
+    print(f"document_scanner v{VERSION} підтримує формати doc, docx, xls, xlsx, odt, ods\n")
+
     disks = input("Введіть букву диска для пошуку (наприклад, CDE): ").strip().upper()
     search_phrases = ["Для службового користування", "Таємно"]
 
