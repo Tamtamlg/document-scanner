@@ -3,6 +3,7 @@ import win32com.client
 import openpyxl
 import xlrd
 import socket
+import webbrowser
 from docx import Document
 from odf.opendocument import load
 from odf.text import P
@@ -230,16 +231,121 @@ if __name__ == "__main__":
             print(f"\n🔍 Починаємо пошук на диску {root_folder} ...")
             results = search_in_all_files(root_folder, search_phrases)
 
-            all_results[disk] = results  
+            all_results[disk] = results
 
-            result_file = f"{computer_name}_{disk}.txt"
-            with open(result_file, "w", encoding="utf-8") as f:
+            html_file = f"{computer_name}_{disk}.html"
+            with open(html_file, "w", encoding="utf-8") as f:
+                f.write("""
+                    <html>
+                    <head>
+                    <meta charset="utf-8">
+                    """)
+                f.write(f"<title>Диск {disk}</title>")
+                f.write("""
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        table { border-collapse: collapse; width: 100%; }
+                        th, td { border: 1px solid #999; padding: 8px; text-align: left; }
+                        th { background-color: #f2f2f2; cursor: pointer; }
+                        tr:hover { background-color: #f9f9f9; }
+                        .highlight { background-color: #ffff99; font-weight: bold; }
+                        #searchInput { margin-bottom: 15px; padding: 5px; width: 300px; }
+                    </style>
+                    <script>
+                        function sortTable(n) {
+                            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+                            table = document.getElementById("resultTable");
+                            switching = true;
+                            dir = "asc"; 
+                            while (switching) {
+                                switching = false;
+                                rows = table.rows;
+                                for (i = 1; i < (rows.length - 1); i++) {
+                                    shouldSwitch = false;
+                                    x = rows[i].getElementsByTagName("TD")[n];
+                                    y = rows[i + 1].getElementsByTagName("TD")[n];
+                                    if (dir == "asc") {
+                                        if (x.innerText.toLowerCase() > y.innerText.toLowerCase()) {
+                                            shouldSwitch = true;
+                                            break;
+                                        }
+                                    } else if (dir == "desc") {
+                                        if (x.innerText.toLowerCase() < y.innerText.toLowerCase()) {
+                                            shouldSwitch = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (shouldSwitch) {
+                                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                                    switching = true;
+                                    switchcount ++;
+                                } else {
+                                    if (switchcount == 0 && dir == "asc") {
+                                        dir = "desc";
+                                        switching = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        function filterTable() {
+                            var input, filter, table, tr, td, i, j, txtValue, found;
+                            input = document.getElementById("searchInput");
+                            filter = input.value.toLowerCase();
+                            table = document.getElementById("resultTable");
+                            tr = table.getElementsByTagName("tr");
+
+                            for (i = 1; i < tr.length; i++) {
+                                tr[i].style.display = "none";
+                                td = tr[i].getElementsByTagName("td");
+                                found = false;
+                                for (j = 0; j < td.length; j++) {
+                                    if (td[j] && td[j].innerText.toLowerCase().indexOf(filter) > -1) {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (found) {
+                                    tr[i].style.display = "";
+                                }
+                            }
+                        }
+                    </script>
+                    </head>
+                    <body>
+                    """)
+                f.write(f"<h2>Результати перевірки диску {disk} (знайдено файлів: {len(results)})</h2>")
+                f.write("""
+                    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Пошук по таблиці...">
+
+                    <table id="resultTable">
+                    <tr>
+                        <th onclick="sortTable(0)">Файл</th>
+                        <th onclick="sortTable(1)">Знайдені фрази</th>
+                    </tr>
+                    """)
+
                 for file, texts in results:
-                    f.write(f"\n📄 Файл: {file}\n")
+                    formatted_texts = []
                     for text in texts:
-                        f.write(f"🔹 {text}\n")
+                        for phrase in search_phrases:
+                            highlighted = f"<span class='highlight'>{phrase}</span>"
+                            text = text.replace(phrase, highlighted)
+                        formatted_texts.append(text)
+                    joined_texts = "<br>".join(formatted_texts)
 
-            print(f"✅ Знайдено файлів на диску {disk}: {len(results)}. Результати збережено в {result_file}")
+                    f.write(f"<tr><td>{file}</td><td>{joined_texts}</td></tr>\n")
+
+                f.write("""
+            </table>
+            </body>
+            </html>
+            """)
+
+            print(f"✅ Знайдено файлів на диску {disk}: {len(results)}. Результати збережено в {html_file}")
+
+            webbrowser.open(f"file://{os.path.abspath(html_file)}")
 
         else:
             print(f"❌ Помилка: диск {disk}:\\ не знайдено!")
