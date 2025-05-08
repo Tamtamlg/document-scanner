@@ -10,7 +10,7 @@ from odf.text import P
 from odf.table import Table, TableRow, TableCell
 
 
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 
 
 def clean_text(text):
@@ -215,11 +215,37 @@ def get_computer_name():
     return computer_name
 
 
+def get_search_phrases():
+    while True:
+        print("🔍 Виберіть режим пошуку:")
+        print("1 - Шукати тільки фразу \"Таємно\"")
+        print("2 - Шукати фрази \"Для службового користування\", \"Таємно\"")
+        print("3 - Ввести свої фрази вручну")
+
+        choice = input("Ваш вибір (1, 2 або 3): ").strip()
+
+        if choice == "1":
+            return ["Таємно"]
+        elif choice == "2":
+            return ["Для службового користування", "Таємно"]
+        elif choice == "3":
+            while True:
+                phrases_input = input("Введіть фрази через кому: ").strip()
+                return [phrase.strip() for phrase in phrases_input.split(",") if phrase.strip()]
+                if len(search_phrases) >= 1:
+                    break
+                else:
+                    print("❌ Треба ввести хоча б одну фразу!")
+            break
+        else:
+            print("❌ Невірний вибір! Спробуйте ще раз.\n")
+
+
 if __name__ == "__main__":
     print(f"document_scanner v{VERSION} підтримує формати doc, docx, xls, xlsx, odt, ods\n")
 
+    search_phrases = get_search_phrases()
     disks = input("Введіть букву диска для пошуку (наприклад, CDE): ").strip().upper()
-    search_phrases = ["Для службового користування", "Таємно"]
 
     all_results = {}
     computer_name = get_computer_name()
@@ -315,7 +341,7 @@ if __name__ == "__main__":
                     </head>
                     <body>
                     """)
-                f.write(f"<h2>Результати перевірки диску {disk} (знайдено файлів: {len(results)})</h2>")
+                f.write(f"<h2>Результати перевірки {computer_name} (на  диску {disk} знайдено файлів: {len(results)})</h2>")
                 f.write("""
                     <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Пошук по таблиці...">
 
